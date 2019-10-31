@@ -1,0 +1,10 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+
+
+#Archived Data
+#=============
+historical_data/
+old_esp_data/
