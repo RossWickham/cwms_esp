@@ -37,7 +37,7 @@ shinyServer(function(input, output) {
     #histFcstFull
     #histFcstPartial
     #espFcstPartial <- this is a list, will need to grab currently selected forecast
-    mergeFcst(histFcstFullt, histFcstPartial,espFcstPartial,input$selectedFcst)
+    mergeFcst(histFcstFull, histFcstPartial,espFcstPartial,input$selectedFcst)
 
   })
   

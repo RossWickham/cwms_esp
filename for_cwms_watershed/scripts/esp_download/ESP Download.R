@@ -14,27 +14,19 @@
 #2019-09-30 RSW
 # - modified to use java from the "V" drive, was previously pointed to personal "D" drive
 
-
-#base directory, contains 'rfcLinkFile' Excel file.  Data 
-#  will be saved here
-#saveLocation <- "D:\\CWMS\\script\\esp_download"
-inputArgs <- commandArgs(trailingOnly=TRUE) #Reading input location from file
-baseJavaDir = inputArgs[1]
-saveLocation = inputArgs[2]
-
-# outFileName = commandArgs(trailingOnly=TRUE)
-
-cat(sprintf("\nArgument passed to script:\n\t%s", paste0(inputArgs,collapse="\n\t")))
-
-
 ### Establishing Java Settings ########################################
 #Used by dssrip package
 
 options( java.parameters = "-Xms64m" ) #Increasing java JVM heap size for memory limits (not sure this actually helps)
-
+options(warn=-1)
 
 if(R.Version()$arch=="x86_64"){
   # use 64-bit .jar and .dll
+  
+  #resourceDir should be created in the main script that sources this module
+  #baseJavaDir = "D:\\Programs\\java64"
+  baseJavaDir = "\\\\nww-netapp1\\prjmgnt\\CWMS\\software\\java64"
+  
   cat(sprintf("\n\nLoading 64-bit Java from the following directory:\n\t%s\n\n", baseJavaDir ))
   
   options(dss_location=baseJavaDir )
@@ -47,36 +39,29 @@ if(R.Version()$arch=="x86_64"){
 }
 
 ### Packages ############
-
-library(dssrip)
-library(readr)
-library(lubridate)
-library(XLConnect)
-library(dplyr)
-library(reshape2)
-
+suppressPackageStartupMessages({
+  library(dssrip)
+  library(readr)
+  library(lubridate)
+  library(XLConnect)
+  library(dplyr)
+  library(reshape2)
+})
+  
 ### Config ##############
 cat("\n\nBeginning ESP Download\n\n")
 
+#Batch file feeds this script the fully qualified paths to:
+#  1) the DSS file save location
+#  2) the config Excel file in cwms_esp folder
+inputArgs <- commandArgs(trailingOnly=TRUE)
+saveLocation <-  inputArgs[1] #Reading input location from file
+configFile <- inputArgs[2]
 
 # has all URLs and CSV file names for all sites and ESP configurations
+# - has three tabs for the different 'flavors' of ESP traces
+#   (natural, unadjusted, and water supply)
 rfcLinkFile <- "rfc_esp_links.xlsm" 
-
-siteIDs <- c("IHDW",
-             "LMNW",
-             "HOPW",
-             "LGSW",
-             "LGDW",
-             "SPDI",
-             "PRII",
-             "DWRI",
-             "ORFI",
-             "ANAW",
-             "TRYO",
-             "WHBI",
-             "IMNO",
-             "HCDI",
-             "BRNI")
 
 #can be '0','5', or '10', representing forecasts generated using
 #  0, 5, and 10 days of short-term weather forecasts.
@@ -92,7 +77,7 @@ rfcLinkWb <- loadWorkbook(rfcLinkFileName)
 rfcLinks <- list()
 #RSW, 8/8/2019
 #Per conversation with Keving Berghoff of the NWRFC, natural
-#  is the best option for ESP.watersupply is legacy, unadjusted has no routing.
+#  is the best option for ESP. watersupply is legacy, unadjusted has no routing.
 #  
 for(esp_config in c("natural")){ 
   # for(esp_config in c("natural","watersupply","unadjusted")){ #uncomment and comment above to dl all available feeds
@@ -226,16 +211,24 @@ saveToDSS <- function(rawDataList,saveLocation,espDays){
   dssFile$close()
 }
 
+getSiteIDs <- function(configFile){
+  #Pulls the NWRFC site IDs from ../cwms_esp/config.xlsx file's
+  #  'download_sites' tab and returns as a character vector
+  wb <- loadWorkbook(configFile)
+  wksht <- readWorksheet(wb,"download_sites")
+  return(as.character(wksht$nwrfc_site_ids))
+}
+
 ## Saving ###########
+
+siteIDs <-getSiteIDs(configFile)
+
+cat(sprintf("\nDownloading the following Site IDs:\n\t%s",
+            paste0(siteIDs,collapse="\n\t")))
 
 urlList <- getAllURLs(siteIDs,espDays)
 
-# cat(sprintf("Downloading and processing the following URLs:\n\t%s",
-            # paste0(urlList$url,collapse="\n\t")))
-
-# cat(sprintf("\n\nBegin Download Data\t%s\n\n",Sys.time()))
 rawDataList <- getRawDataList(urlList$url)   #Reading data into a list
-# cat(sprintf("\n\nBegin Saving Data\t%s\n\n",Sys.time()))
 saveToDSS(rawDataList = rawDataList, saveLocation = saveLocation,espDays=espDays)
-# cat("\n\nDone Download ESP\n\n")
+
 

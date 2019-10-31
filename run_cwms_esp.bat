@@ -3,14 +3,13 @@ SETLOCAL ENABLEEXTENSIONS
 title CWMS ESP Viewer
 rem This runs the R scripts that launch the CWMS ESP viewer
 
-rem R executable location on the "V" drive
-set rExecutablePath="\\nww-netapp1\prjmgnt\CWMS\software\R-3.4.2\bin\Rscript.exe"
-set rExecutablePath="D:\crt_crso\FRA_Plotter_v4.6.1\resources\R-3.4.2\bin\Rscript.exe"
+rem retrieving R and Java configuration
+call r_java_config.bat
 
-rem Chrome browser executable path
-set chromeExecutablePath="C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"
-
+rem for execution of shiny app
 set rScript=webapp\run.R
+
+rem for testing and debugging
 rem rScript=webapp\test.R
 
 echo --- Launching CWMS ESP Viewer ---
@@ -23,6 +22,7 @@ echo Host IP: %defaultHost%
 echo Port:    %defaultPort%
 echo url:     %defaultURL%
 echo R Executable Path: %rExecutablePath%
+echo Java Path: %baseJavaDir%
 echo webapp location:   %rScript%
 echo ---------------------------------
 echo.

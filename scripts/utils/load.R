@@ -102,7 +102,7 @@ loadConfig <- function(){
   
   # sheetNames <- getSheets(wb)
   # out <- Map(readWorksheet_sheetNamesFirst, grep("[^readme]",sheetNames,value = T), list(wb))
-  out <- readWorksheet(object = wb, sheet = "config")
+  out <- readWorksheet(object = wb, sheet = "plot_config")
   
   #Converting instances where datum_shift is NA to 0;  divisor is NA -> 1 
   # out <- lapply(out, function(x) {x$datum_shift[is.na(x$datum_shift)] <- 0; x$divisor[is.na(x$divisor)] <- 1; return(x)})
