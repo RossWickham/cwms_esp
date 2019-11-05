@@ -4,7 +4,7 @@ title CWMS ESP Viewer
 rem This runs the R scripts that launch the CWMS ESP viewer
 
 rem retrieving R and Java configuration
-call r_java_config.bat
+call r_java_esp_config.bat
 
 rem for execution of shiny app
 set rScript=webapp\run.R

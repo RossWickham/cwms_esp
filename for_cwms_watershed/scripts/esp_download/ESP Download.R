@@ -51,27 +51,29 @@ suppressPackageStartupMessages({
 ### Config ##############
 cat("\n\nBeginning ESP Download\n\n")
 
+#Note: Site IDs loaded via function call in main section
+
 #Batch file feeds this script the fully qualified paths to:
 #  1) the DSS file save location
 #  2) the config Excel file in cwms_esp folder
 inputArgs <- commandArgs(trailingOnly=TRUE)
-saveLocation <-  inputArgs[1] #Reading input location from file
-configFile <- inputArgs[2]
+cat(sprintf("\nBatch file fed script the following arguments:\n\t%s\n",paste0(inputArgs,collapse="\n\t")))
+saveLocation <-  inputArgs[1]         #Reading input location from file
+configFile <- inputArgs[2]            #Config file location (to retrieve site IDs for download)
+espDays <- as.character(inputArgs[3]) #0, 5, and 10 days of short-term weather forecasts.
 
 # has all URLs and CSV file names for all sites and ESP configurations
 # - has three tabs for the different 'flavors' of ESP traces
 #   (natural, unadjusted, and water supply)
 rfcLinkFile <- "rfc_esp_links.xlsm" 
 
-#can be '0','5', or '10', representing forecasts generated using
-#  0, 5, and 10 days of short-term weather forecasts.
-espDays <- "10" 
+
 
 ### Setup #############
 rfcLinkFileName <- sprintf("%s\\scripts\\esp_download\\%s",dirname(dirname(saveLocation)),rfcLinkFile)
 #rfcLinkFileName <- sprintf("%s\\%s",saveLocation,rfcLinkFile)
 #if(!file_test("-f",saveLocation)) rfcLinkFileName <- sprintf("%s\\%s",dirname(saveLocation),rfcLinkFile)
-cat(sprintf("\nLoading Excel with URL Links:\t%s", rfcLinkFileName))
+cat(sprintf("\n\nLoading Excel with URL Links:\t%s", rfcLinkFileName))
 rfcLinkWb <- loadWorkbook(rfcLinkFileName)
 
 rfcLinks <- list()
@@ -216,19 +218,23 @@ getSiteIDs <- function(configFile){
   #  'download_sites' tab and returns as a character vector
   wb <- loadWorkbook(configFile)
   wksht <- readWorksheet(wb,"download_sites")
-  return(as.character(wksht$nwrfc_site_ids))
+  return(str_trim(as.character(wksht$nwrfc_site_ids)))
 }
 
 ## Saving ###########
 
 siteIDs <-getSiteIDs(configFile)
 
-cat(sprintf("\nDownloading the following Site IDs:\n\t%s",
+cat(sprintf("\n\nDownloading the following Site IDs:\n\t%s",
             paste0(siteIDs,collapse="\n\t")))
 
 urlList <- getAllURLs(siteIDs,espDays)
 
+cat(sprintf("\nSite IDs matched with %g urls", nrow(urlList)))
+
 rawDataList <- getRawDataList(urlList$url)   #Reading data into a list
+
+
 saveToDSS(rawDataList = rawDataList, saveLocation = saveLocation,espDays=espDays)
 
 
