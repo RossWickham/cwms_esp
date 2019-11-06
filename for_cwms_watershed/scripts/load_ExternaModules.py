@@ -19,12 +19,12 @@ import os, sys, glob, types
 def reloadImports():
 	#rjc 3/2/2018. For some reason, the looping reload doesn't fully do the reloading.
 	#Have to do it manually if you want it to stick
-	from NWDJyLib import cTimes
-	reload(cTimes)
-	from NWDJyLib.CanadianOps import cRefillFRMBCH
-	from NWDJyLib.CanadianOps import cLocalFRM
-	reload(cRefillFRMBCH)
-	reload(cLocalFRM)
+	#from NWDJyLib import cTimes
+	#reload(cTimes)
+	#from NWDJyLib.CanadianOps import cRefillFRMBCH
+	#from NWDJyLib.CanadianOps import cLocalFRM
+	#reload(cRefillFRMBCH)
+	#reload(cLocalFRM)
 	for name, val in globals().items():
 		if isinstance(val, types.ModuleType):
 			reload(val)

@@ -1,15 +1,16 @@
 '''
 Save CWMS forecast.dss to sql
  - must have a forecast open
- - need the sqlite jar in your CWMS install
+ - need the sqlite jar in your CWMS install or have the 'load_ExternalModules.py' script set up
  
 This script was modified from example here:
 	https://stackoverflow.com/questions/3277743/reading-an-sqlite-database-from-jython
 	
-Got sqlite jar file here, also dropped copy here on NWW drive (N:\EC-H\HYDROLOGY SECTION\Wickham\Scripts\Jython\HecMath_to_sql):
+Got sqlite jar file here, also dropped copy here on NWW drive (N:\EC-H\HYDROLOGY SECTION\Wickham\Scripts\Jython\HecMath_to_sql),.
+	and is available from the '.../cwms_esp/for_cwms_watershed/ExternalModules':
 	http://www.java2s.com/Code/Jar/s/Downloadsqlitejdbc054jar.htm
 	
-The jar referenced above needs to be placed with the other CAVI jar files:
+If haven't set up 'load_ExternalModules.py', jar referenced above needs to be placed with the other CAVI jar files:
 	<CAVI install>/CAVI/jar
 Note: you may need to open-close the CAVI if it's open since the jars are loaded on startup
 	
@@ -30,10 +31,11 @@ import re
 #Some hints on regular expressions:
 #  '.*' defines any character from 0-n times
 # python reg expr cheat sheet is here: https://www.debuggex.com/cheatsheet/regex/python
+#Note: exporting lots of data to sqlite will slow down compute times
 regExprToSave = ["/.*/.*/FLOW.*/.*/.*/.*/",
 				 "/.*/.*-POOL/.*/.*/.*/.*/"]
 #
-#To be saved in same directory as forecast.dss
+#Output sqlite file to be saved in same directory as forecast.dss
 dbFileName    = "forecast.db"
 #
 #Values will be rounded prior to save
@@ -238,7 +240,6 @@ uniquePathsWithoutDPart = [str(e) for e in list(set(pathsWithoutDPart))]
 selectedPaths = filterWithRegExpr(regExprToSave, uniquePathsWithoutDPart)
 #
 #
-#writeDSSPathsToSQLite(selectedPaths, forecastDSS, jdbcURL)
 writeEnsembleDSSToSQLite(selectedPaths, forecastDSS, jdbcURL,sigFigs, decPrec)
 #
 output( "\nWrote new SQLite db here: %s/%s"  % (sqlSaveDir, dbFileName))

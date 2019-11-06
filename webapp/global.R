@@ -31,6 +31,8 @@ config <- loadConfig()
 cDataTbl <- loadCurrentDataTbl()
 fcstTbl <- loadFcstDataTbl()
 
+#Pulling forecast info, following same name convention as 'allESPData'
+fcstInfo <- loadFcstInfo()
 
 #Loading CWMS data as defined in the 
 cat("\nLoading Current CWMS Data")
@@ -39,11 +41,10 @@ cwmsDataString <- getCurrentCWMSTableStrings(cDataTbl)
 #Loading all data to save time later
 cat("\nLoading ESP Data")
 availableFcsts <- getAvailabelForecasts()
-allESPData <- loadAllForecastDB(availableFcsts, config)
+allESPData <- loadAllForecastDB(availableFcsts, config, fcstTbl)
 if(length(allESPData) == 0) stop("\n\nNo forecast.db files found in 'forecast' folder")
 
-#Pulling forecast info, following same name convention as 'allESPData'
-fcstInfo <- loadFcstInfo()
+
   
 #Computing the desired metrics, as defined in 'metricsToCompute' object above
 allQuantileData <- computeAllQuantiles(allESPData, metricsToCompute$metric)
@@ -55,49 +56,65 @@ availableYrs <- sort(unique(allESPData[[1]][[1]]$year))
 source("scripts/startup_checks.R")
 
 
-#Initializing forecast tables as NA
+#Initializing forecast tables as NULL
 histFcstFull <- histFcstPartial <- espFcstPartial <- NULL
 
 #retrieve inflow data and compute forecast
+fcstDataTbl <- list() #initializing object for finalized output
 if(nrow(fcstTbl)==1){
   
   cat("\nLoading Historical CWMS Data and Computing Forecast Volumes")
   cwmsFcst <- getHistoricalCWMS(cwmsPath = fcstTbl$cwms_path,startESPYr = min(availableYrs))
   
-  fcstStartDate <- as.Date(fcstTbl$fcst_start_date) #forecast start date (year doesn't matter)
-  fcstEndDate <- as.Date(fcstTbl$fcst_end_date)     #forecast end date (year doesn't matter)
+  #Forecast time window (e.g., Apr01-Jul31 for Dworshak)
+  fcstTWStartDate <- as.Date(fcstTbl$fcst_start_date) #forecast start date (year doesn't matter)
+  fcstTWEndDate <- as.Date(fcstTbl$fcst_end_date)     #forecast end date (year doesn't matter)
   
+  #Ensuring years are same for all dates
+  fcstTWStartDate <- setYear(fcstTWStartDate)
+  fcstTWEndDate <- setYear(fcstTWEndDate)
   
   #start date of partial forecast window.  If outside forecast time window, this is the forecast
   #  start date.  Otherwise, it is the current date (year doesn't matter)
-  partialDate <- as.Date(ifelse(Sys.Date()>=fcstStartDate & Sys.Date()<=fcstEndDate,
-                                Sys.Date(), fcstStartDate))
+  # partialDate <- as.Date(ifelse(Sys.Date()>=fcstStartDate & Sys.Date()<=fcstEndDate,
+  #                               Sys.Date(), fcstStartDate))
+  # partialDate <- as.Date(fcstEndDate)
+  # 
+  # #Date strings to be assigned to be used in column names
+  # fullDateString <- sprintf("(%s - %s)", dateTommmdd(fcstStartDate),dateTommmdd(fcstEndDate))
+  # partialDateString <- ifelse(fcstStartDate==partialDate,
+  #                             "(NA - Outside Fcst Time Window)",
+  #                             sprintf("(%s - %s)", dateTommmdd(fcstStartDate),dateTommmdd(partialDate)) )
   
-  #Date strings to be assigned to be used in column names
-  fullDateString <- sprintf("(%s - %s)", dateTommmdd(fcstStartDate),dateTommmdd(fcstEndDate))
-  partialDateString <- ifelse(fcstStartDate==partialDate,
-                              "(NA - Outside Fcst Time Window)",
-                              sprintf("(%s - %s)", dateTommmdd(fcstStartDate),dateTommmdd(partialDate)) )
-  
-  #Compute historically observed runoff volume for full forecast time window
-  histFcstFull <- computeFcstVols(tsData = cwmsFcst,
-                                  startDate = fcstStartDate,
-                                  endDate = fcstEndDate,
-                                  outColNames=c("wy",sprintf("Historical Forecast Volume %s",
-                                                             fullDateString)))
-  
-  #Compute historically observed runoff volume from start of forecast time window to current date
-  histFcstPartial <- computeFcstVols(tsData = cwmsFcst,
-                                     startDate = fcstStartDate,
-                                     endDate = partialDate,
-                                     outColNames=c("wy",sprintf("Historical Forecast Volume %s",
-                                                                partialDateString)))
-  
-  #Compute ESP runoff volume from start of forecast time window to current date
-  espFcstPartial <- computeESPFcstVols(allESPData,fcstTbl,fcstStartDate, partialDate,
-                                       outColNames=c("wy",sprintf("ESP Forecast Volume %s",
-                                                                  partialDateString)))
-  
+  for( selectFcst in names(fcstInfo) ){
+    
+    #Pulling forecast's end time and adjust year
+    fcstEndDate = setYear(as.Date(fcstInfo[[selectFcst]]$endTime))
+    if(fcstEndDate <= fcstTWStartDate) fcstEndDate <- fcstTWStartDate #setting equal if less than start date
+    if(fcstEndDate >= fcstTWEndDate) fcstEndDate <- fcstTWEndDate #setting equal if greater than end date
+    
+    #Compute historically observed runoff volume for full forecast time window
+    histFcstFull <- computeFcstVols(tsData = cwmsFcst,
+                                    startDate = fcstTWStartDate,
+                                    endDate = fcstTWEndDate,
+                                    fcstEndDate = fcstTWEndDate)
+    
+    #Compute historically observed runoff volume from start of forecast time window to current date
+    histFcstPartial <- computeFcstVols(tsData = cwmsFcst,
+                                       startDate = fcstTWStartDate,
+                                       endDate = fcstTWEndDate,
+                                       fcstEndDate = fcstEndDate)
+    
+    #Compute ESP runoff volume from start of forecast time window to current date
+    espFcstPartial <- computeFcstVols(tsData = allESPData[[selectFcst]],
+                                      startDate = fcstTWStartDate,
+                                      endDate = fcstTWEndDate,
+                                      isESP = T,
+                                      fcstEndDate = fcstEndDate)
+    
+    fcstTbl[[selectFcst]] <- mergeFcst(histFcstFull, histFcstPartial,espFcstPartial)
+  }
+
 }
 
 

@@ -62,11 +62,14 @@ computeESPFcstVols <- function(allESPData, fcstTbl, startDate, endDate, outColNa
                                      endDate = endDate,isESP = T, outColNames))
 }
 
-computeFcstVols <- function(tsData, startDate, endDate,isESP=F, outColNames=c("wy","vol")){
-  #sums the inflow volume as kaf by water year for the
+computeFcstVols <- function(tsData, startDate, endDate,isESP=F, fcstEndDate){
+  #sums the inflow volume as Maf by water year for the
   #  time window specified between 'startDate' and 'endDate'
   #  both of which are Date or POSIXct objects that 
   #  a month and day can be extracted from
+  #  'isESP' acts a trigger to properly format the dataframe columns names and dates
+  #  'fcstEndDate' is specific to the forecast being evaluated and extracted from the
+  #     'fcstInfo' object as atomic POSIXct 
   #example tsData input:
   #
   # > str(tsData)
@@ -76,11 +79,21 @@ computeFcstVols <- function(tsData, startDate, endDate,isESP=F, outColNames=c("w
   
   MafPerkcfsd <- 86400/43560/1000 #assuming we'll be getting kcfs from CWMS database
   
+  partialDateString <- ifelse(startDate==fcstEndDate,
+                              "(NA - Outside Fcst Time Window)",
+                              sprintf("(%s - %s)", dateTommmdd(startDate),dateTommmdd(fcstEndDate)) )
+
+  
+  ### CONTINUE HERE #################
+  #
+  
+  valColName = sprintf("Historical Forecast Volume (%s)",partialDateString)
   
   #If this is ESP data, need to modify the dates to correspond to the associated year
   if( isESP ) {
     year(tsData$date) <- as.numeric(tsData$year) #any issues here with water years?
     tsData <- tsData[, c("date","value")] #and remove extraneous columns
+    valColName = sprintf("ESP Forecast Volume (%s)",partialDateString)
     #don't need to convert since this is done handled on load and set in the config
     # tsData$value <- tsData$value/1000 #converting to kcfs, which is what will be coming from CWMS db
   }
@@ -108,16 +121,16 @@ computeFcstVols <- function(tsData, startDate, endDate,isESP=F, outColNames=c("w
   
   if(startDate == endDate) out$vol <- 0 #correction for outside of time window
   
-  names(out) <- outColNames #renaming
+  names(out)[2] <- valColName #renaming value column
   
   return(out)
 }
 
 
-mergeFcst <- function(histFcstFull, histFcstPartial,espFcstPartial,selectFcst){
+mergeFcst <- function(histFcstFull, histFcstPartial,espFcstPartial){
   #Merges the the three historical/esp forecast volume dataframes into one,
   #  using the currently selected ESP volumes
   if( any(is.null(list(histFcstFull, histFcstPartial, espFcstPartial))) ) return(NULL)
-  Reduce(merge, list(histFcstFull, histFcstPartial,espFcstPartial[[selectFcst]]))
+  Reduce(merge, list(histFcstFull, histFcstPartial,espFcstPartial))
 }
 

@@ -44,7 +44,6 @@ fcstNames = fcst.getForecastRunNames()
 fcstRun = fcst.getForecastRun(fcstNames[0])
 fcstRunKey = fcstRun.getKey()
 fcstDssFileName = fcst.getOutDssPath()
-#forecastDSS = HecDss.open(fcstDssFileName)
 #
 #
 ## Copy ESP Data ##
@@ -66,6 +65,4 @@ dssFile.setTimeWindow(timeWindowString)
 #
 #output("\nSet start time:\t%s\nSet end time:\t%s" % (dssFile.getStartTime(), dssFile.getEndTime()))
 dssFile.copyRecordsFrom(fcstDssFileName, allPaths)
-#forecastDSS.copyRecordsInto(copyFromDSSFilePath,allPaths)
-#forecastDSS.done()
 dssFile.done()

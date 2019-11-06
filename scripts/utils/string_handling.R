@@ -90,8 +90,6 @@ getFcstInfo <- function(fcstDir){
   
   require(XML)
   
-  fcstDir <- "D:\\CWMS\\watersheds\\forecast\\Test_-_ESP_10012019\\Lower_Snake"
-  
   fcstFile <- dir(path = fcstDir, pattern = ".frcst$",full.names = T)
   
   #reading in as xml
@@ -99,9 +97,10 @@ getFcstInfo <- function(fcstDir){
   
   #extracting relavant XML information
   out <- list()
-  out$watershed <- basename(fcstDir )
+  out$watershed <- basename( fcstDir )
   out$description <- xmlList$Description$desc["value"]
-  out$lastComputeTime <- as.POSIXct(xmlList$LastComputeTimes$Plugin$ModelAlternative$Time,format="%d %b %Y, %H:%M:%S")
+  #this doesn't work all the time - not sure why
+  # out$lastComputeTime <- as.POSIXct(xmlList$LastComputeTimes$Plugin,format="%d %b %Y, %H:%M:%S") 
   out$fcstTime <- as.POSIXct(xmlList$ForecastTimeWindow$Forecast,format="%d%b%Y %H%M")
   out$startTime <- as.POSIXct(xmlList$ForecastTimeWindow$Start,format="%d%b%Y %H%M")
   out$endTime <- as.POSIXct(xmlList$ForecastTimeWindow$End,format="%d%b%Y %H%M")

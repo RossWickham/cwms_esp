@@ -15,3 +15,8 @@ convertToSameWY <- function(inDates,wy = 3001,dateColName = "date"){
   year(inDF$wyDate[month(inDF$wyDate)>=10]) <- wy-1 #adjust years for months >=Oct
   return(inDF)
 }
+
+setYear <- function(inDate, newYr=year(Sys.Date())){
+  year(inDate) <- newYr
+  return(inDate)
+}

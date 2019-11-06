@@ -44,14 +44,18 @@ loadDFListForecastDF <- function(forecastDBFile, tblNames, config){
 
 
 
-loadAllForecastDB <- function(forecastDBFiles, config){
+loadAllForecastDB <- function(forecastDBFiles, config, fcstTbl){
   #Reads in all available forecast.db files
   require(RSQLite)
+  
+  #Adding on the inflow path from forecast tab if specified
+  fcstTblName <- NULL
+  if( nrow(fcstTbl) == 1) fcstTblName <- fcstTbl$sqlite_tblname
   
   tblNames <- getAllConfigVals(config, "sqlite_tblname")
   
   #Load each forecast
-  out <- Map(loadDFListForecastDF, forecastDBFiles, list(tblNames), list(config))
+  out <- Map(loadDFListForecastDF, forecastDBFiles, list(unique(c(tblNames,fcstTblName))), list(config))
   
   #renaming by <watershed>:<forecast>
   names(out) <- getAvailabelForecasts(T)
@@ -137,7 +141,7 @@ loadFcstDataTbl <- function(){
 
 loadFcstInfo <- function(){
   fcstFiles <- dir(dirname(availableFcsts),".frcst$",full.names = T)
-  fcstInfo <- Map(getFcstInfo, fcstFiles)
+  fcstInfo <- Map(getFcstInfo, dirname(fcstFiles))
   names(fcstInfo) <- sprintf("%s:%s", recursiveDirName(fcstFiles,1,T), recursiveDirName(fcstFiles,2,T))#renaming based on forecast
   return(fcstInfo)
 }
