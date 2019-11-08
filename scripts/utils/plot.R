@@ -48,7 +48,7 @@ makeHeaderPlot <- function(selectedMetrics, selectedYrs,selectedFcstInfo,addLine
                    metricsToCompute$baseRLty[match(selectedMetrics,metricsToCompute$metric)])
     lineCols <- c(espLinCol,
                   sapply(selectedYrs,getColor,allYrs = selectedYrs),
-                  rep("black",length(selectedYrs)))
+                  rep("black",length(selectedMetrics)))
     lineWidths <- c(1,rep(2,length(selectedYrs)+length(selectedMetrics)))
     legend("topright",legend=lineStrings,col=lineCols, lty=lineTypes,bty = "n",lwd=lineWidths)
     

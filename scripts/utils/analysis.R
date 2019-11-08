@@ -83,10 +83,6 @@ computeFcstVols <- function(tsData, startDate, endDate,isESP=F){
                               "NA - Outside Fcst Time Window",
                               sprintf("%s - %s", dateTommmdd(startDate),dateTommmdd(endDate)) )
 
-  
-  ### CONTINUE HERE #################
-  #
-  
   valColName = sprintf("Historical Forecast Volume (%s)",partialDateString)
   
   #If this is ESP data, need to modify the dates to correspond to the associated year
@@ -116,7 +112,8 @@ computeFcstVols <- function(tsData, startDate, endDate,isESP=F){
 
   if(startDate == endDate){
     #correction for outside of time window
-    out$vol <- 0 
+    out <- data.frame(wy=sort(unique(dailyAvg$wy)),vol=0,stringsAsFactors = F)
+    # out$vol <- 0 
   }else{
     #summing inflows
     out <- ddply(.data = dailyAvg, .variables = .(wy), summarize,

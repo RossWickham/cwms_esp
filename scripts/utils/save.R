@@ -112,15 +112,14 @@ saveToPdf <- function(config, espData, espQData, selectedMetrics, selectedYrs, s
         lines(qData$date,qData[,metric],col="black", lty=metricLty,lwd=2)
       }
       
-      #Adding selecte years
+      #Adding selected years
       for(yr in selectedYrs){
         with(plotData[plotData$year==yr,],
              lines(date,value,col=getColor(yr,selectedYrs),lwd=2))
       }
       
     } #end for loop, subplot
-    
-    # dev.off()
+
     
   }  #End loop of pdf pages
   
