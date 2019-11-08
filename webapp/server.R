@@ -21,6 +21,26 @@ shinyServer(function(input, output) {
   output$fcstNote <- renderUI({
     HTML("Note: Data will update once CWMS<br/>forecast is within forecast time window<br/>")})
   
+  
+  getFcstInfo <- eventReactive(c(input$selectedFcst),{
+    # getVerticalPlotly<- eventReactive(c(input$selectedFcst, input$metrics),{
+    require(plotly)
+    selectedFcstInfo <- fcstInfo[[input$selectedFcst]]
+    HTML(sprintf(paste0(
+      "Watershed:             %s<br/>",
+      "Forecast Name          %s<br/>",
+      "Start Time:            %s<br/>",
+      "Forecast Start Time:   %s<br/>",
+      "End Time:              %s"),
+      selectedFcstInfo$watershed,
+      selectedFcstInfo$description,
+      selectedFcstInfo$startTime,
+      selectedFcstInfo$fcstTime,
+      selectedFcstInfo$endTime))
+  })
+  
+  output$fcst_info <- renderUI(getFcstInfo())
+  
   getVerticalPlotly<- eventReactive(c(input$updateButton),{
   # getVerticalPlotly<- eventReactive(c(input$selectedFcst, input$metrics),{
     require(plotly)
@@ -33,12 +53,8 @@ shinyServer(function(input, output) {
   
 
   getFcstTbl<- eventReactive(c(input$selectedFcst),{
-    #Makes the output table by merging:
-    #histFcstFull
-    #histFcstPartial
-    #espFcstPartial <- this is a list, will need to grab currently selected forecast
-    mergeFcst(histFcstFull, histFcstPartial,espFcstPartial,input$selectedFcst)
-
+    #grab the correct, pre-computed table from list
+    fcstDataTbl[[input$selectedFcst]]
   })
   
   if(nrow(fcstTbl)==1){
@@ -49,12 +65,21 @@ shinyServer(function(input, output) {
   }
 
   
-  eventReactive(c(input$savePDFButton),{
+  # savePDFPlot <- eventReactive(c(input$savePDFButton),{
+  #   #Saves to PDF
+  #   espData <- allESPData[[input$selectedFcst]]
+  #   espQData <- allQuantileData[[input$selectedFcst]]
+  #   saveToPdf(config,espData, espQData, input$metrics, input$selectedYrs, fcstInfo[[input$selectedFcst]])
+  # })
+  
+  observeEvent(input$savePDFButton,{
     #Saves to PDF
     espData <- allESPData[[input$selectedFcst]]
     espQData <- allQuantileData[[input$selectedFcst]]
     saveToPdf(config,espData, espQData, input$metrics, input$selectedYrs, fcstInfo[[input$selectedFcst]])
   })
+  # renderUI(savePDFPlot())
   
-  
+  # output$savePDFPlot <- downloadHandler(filename = "foo.pdf",
+                                        # content = savePDFPlot())
 })

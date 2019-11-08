@@ -62,7 +62,7 @@ computeESPFcstVols <- function(allESPData, fcstTbl, startDate, endDate, outColNa
                                      endDate = endDate,isESP = T, outColNames))
 }
 
-computeFcstVols <- function(tsData, startDate, endDate,isESP=F, fcstEndDate){
+computeFcstVols <- function(tsData, startDate, endDate,isESP=F){
   #sums the inflow volume as Maf by water year for the
   #  time window specified between 'startDate' and 'endDate'
   #  both of which are Date or POSIXct objects that 
@@ -79,9 +79,9 @@ computeFcstVols <- function(tsData, startDate, endDate,isESP=F, fcstEndDate){
   
   MafPerkcfsd <- 86400/43560/1000 #assuming we'll be getting kcfs from CWMS database
   
-  partialDateString <- ifelse(startDate==fcstEndDate,
-                              "(NA - Outside Fcst Time Window)",
-                              sprintf("(%s - %s)", dateTommmdd(startDate),dateTommmdd(fcstEndDate)) )
+  partialDateString <- ifelse(startDate==endDate,
+                              "NA - Outside Fcst Time Window",
+                              sprintf("%s - %s", dateTommmdd(startDate),dateTommmdd(endDate)) )
 
   
   ### CONTINUE HERE #################
@@ -114,12 +114,15 @@ computeFcstVols <- function(tsData, startDate, endDate,isESP=F, fcstEndDate){
   dailyAvg$inFcstPeriod <- yday(dailyAvg$date) %in% startYday:endYday
   dailyAvg$wy <- wateryear(dailyAvg$date)
 
-
-  #summing inflows
-  out <- ddply(.data = dailyAvg, .variables = .(wy), summarize,
-        vol = round(sum(value[inFcstPeriod],na.rm=T)*MafPerkcfsd,2)  )
+  if(startDate == endDate){
+    #correction for outside of time window
+    out$vol <- 0 
+  }else{
+    #summing inflows
+    out <- ddply(.data = dailyAvg, .variables = .(wy), summarize,
+                 vol = round(sum(value[inFcstPeriod],na.rm=T)*MafPerkcfsd,2)  )
+  }
   
-  if(startDate == endDate) out$vol <- 0 #correction for outside of time window
   
   names(out)[2] <- valColName #renaming value column
   

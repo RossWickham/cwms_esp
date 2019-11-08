@@ -2,11 +2,27 @@
 
 
 
-saveToPdf <- function(config, espData, espQData, metrics, selectedYrs, selectedFcstInfo){
+#for testing
+if(F)
+saveToPdf(config = config,
+          espData = allESPData[[1]],
+          espQData = allQuantileData[[1]],
+          selectedMetrics = metricsToCompute$metric[c(2,5,9)],
+          selectedYrs = availableYrs[c(1,4)],
+          selectedFcstInfo = fcstInfo[[1]])
+
+
+
+saveToPdf <- function(config, espData, espQData, selectedMetrics, selectedYrs, selectedFcstInfo){
   #Save out plots to pdf, following the 'plots' column in the 
   require(dplyr)
-  plotConfig <- bind_rows(config)
-  p <- list()
+  
+  cat("\n\nBeginning Save to PDF")
+  
+  #Initializing inputs
+  plotConfig <- config[!is.na(config$pdf_page),] #removing undefined rows
+  selectedYrs <- as.numeric(selectedYrs)
+  
   init <- F #indicates whether or not plot has been initialized
   
   #Line indicating when the forecast starts
@@ -14,115 +30,106 @@ saveToPdf <- function(config, espData, espQData, metrics, selectedYrs, selectedF
   #  y=1 refers to the top of plot and y=0 refers to the bottom of the plot:
   #  https://stackoverflow.com/questions/41267246/how-to-add-annotations-horizontal-or-vertical-reference-line-in-plotly
   fcstStartData <- selectedFcstInfo$fcstTime
-  fcstStartAnnotation <- list(yref = 'paper', xref = "x", y = 0.5, x = fcstStartData, opacity=0.5,
-                              text = "Forecast Start",textangle=-90,showarrow=F)
+  
   
   #establishing save directory and file name
   pdfSaveDir <- "plots"
   pdfFileName <- replaceAllSpecialChars(sprintf("%s_%s_%s",
-                                   selectedFcstInfo$watershed,
-                                    selectedFcstInfo$name,
-                                    format(Sys.time(),"%Y%b%d_%H%M")))
+                                                selectedFcstInfo$watershed,
+                                                selectedFcstInfo$name,
+                                                format(Sys.time(),"%Y%b%d_%H%M")))
+  
+  
   if(!dir.exists(pdfSaveDir)) dir.create(pdfSaveDir)
   pdfFile <- sprintf("%s/%s.pdf", pdfSaveDir, pdfFileName)
+
   
-  ### CONTINUE HERE ####
   
   #initialize pdf
-  pdf(file = pdfFile,onefile = T,paper = "a4")
+  pdf(file = pdfFile,onefile = T,paper = "a4",pointsize = 12)
   
+  par(xaxs="i")
   
   for( pg in unique(config$pdf_page) ){
+    cat(sprintf("\n\tCreating pg %g",pg))
+
+    subConfig <- config[config$pdf_page==pg,] #subsetting plot config fort this page
     
-    subConfig <- config[config$pdf_page==pg,]
-    #
     #establish layout for desired number of plots on the page
-    graphics::layout(mat = matrix(1:nrow(subConfig), ncol=1))
+    # +1 plot is for the header and legend
+    graphics::layout(mat = matrix(1:(nrow(subConfig)+1), ncol=1),heights=c(2,rep(2,nrow(subConfig))))
+    
+    #Add header and legend
+    makeHeaderPlot(selectedMetrics, selectedYrs,selectedFcstInfo,addLineLeg=T)
     
     for(k in 1:nrow(subConfig)){
       
       #extracting plot parameters to simplify eval (had difficulty wrapping plot_ly in with statement)
       sqlite_tblname <- subConfig$sqlite_tblname[k]
-      yaxis_label <- subConfig$yaxis_label[k]
+      yaxis_label <- gsub("<br>","\n",subConfig$yaxis_label[k])
       
       #extracting ESP lines and quantiles
       plotData <- espData[[sqlite_tblname]]
       qData <- espQData[[sqlite_tblname]]
       
-      
       #initialize plot and grid, adjust for margins:
       #  no spaces between plots in the vertical, bottom plot has dates
+      isBottomPlot <- F
       if(k==1) par(mar=c(0,5,2,2)) #top plot
       if(k>1 & k < nrow(subConfig)) par(mar=c(0,5,0,2)) #middle plot
-      if(k==nrow(subConfig)) par(mar=c(4,5,0,2)) #bottom plot
+      if(k==nrow(subConfig)){
+        par(mar=c(4,5,0,2))
+        isBottomPlot <- T}#bottom plot
       
-      plot.new(); box()
+      #establishing axes limits and minor grid lines
+      xLimit <- range(qData$date,na.rm=T)
+      yLimit <- range(c(qData$min,qData$max),na.rm=T)
+      halfMonthDates <- qData$date[day(qData$date) %in% c(1,15) & hour(qData$date)==0]
       
+      # plot.new(); box() #for testing
+      plot(NA,xlim=xLimit,ylim=yLimit,axes=F,xlab="",ylab=yaxis_label)
+      segments(x0 = halfMonthDates,y0 = -1E6,y1 = 1E6,col = minGridCol,lty=minLty)
+      grid(nx = NA,ny=NULL)
+      axis(2)
+      box()
+      if(isBottomPlot) axis(1,halfMonthDates,format(halfMonthDates,"%b%d"))
+      
+      #line for start of forecast
+      lines(c(selectedFcstInfo$fcstTime,selectedFcstInfo$fcstTime),
+            c(-1E6,1E6),lty=2,col=grey(0,0.5))
+      text(x = selectedFcstInfo$fcstTime,y=max(yLimit),labels = "Forecast Start Time",cex=0.5,
+           pos=4,srt=-90)
       
       #iterate through ESP traces and plot with transparency in grey
-      
-      
-      # p[[k]] <-plot_ly(plotData, x=~date, y=~value,color=~year,
-      #                  type = "scatter",mode="lines",
-      #                  hoverinfo="x+y+text",
-      #                  text=~paste0(year),
-      #                  showlegend=F,name="",legendgroup="allESP",
-      #                  line=list(color=colToHex("grey",0.4))) %>%
-      #   layout(xaxis=list(title=""),yaxis=list(title=yaxis_label))
-      # layout(xaxis=list(title=""),yaxis=list(title=yaxis_label),annotations=list(fcstStartAnnotation))
-      
-      #dummy to control all ESP
-      # p[[k]] <-p[[k]]  %>% add_trace(data = plotData[1,], x=~date, y=~value,color=~year,
-      #                                type = "scatter",mode="lines",
-      #                                line=list(color=colToHex("grey",0.4)),
-      #                                showlegend=!init,name="All ESP",legendgroup="allESP",
-      #                                inherit=F)
-      
+      for( yr in unique(plotData$year)){
+        with(plotData[plotData$year==yr,],
+             lines(date,value,col=espLinCol))
+      }
       
       # Adding metrics if any current selected
-      # if( length(metrics) != 0){
-      #   for( metric in metrics){
-      #     lineData <- qData[, c("date",metric)]
-      #     names(lineData) <- c("date", "value")
-      #     #The line type, as specified in the global.R script
-      #     lty_plotly <- metricsToCompute$lty_plotly[metricsToCompute$metric==metric]
-      #     
-      #     p[[k]] <- p[[k]] %>% 
-      #       add_trace(data = lineData,x=~date, y=~value,
-      #                 type = "scatter",mode="lines",
-      #                 line=list(dash=lty_plotly,color=colToHex("black",0.7)), name=metric,
-      #                 legendgroup=metric, showlegend=!init,inherit = F)
-      #   }
-      # }
+      for(metric in selectedMetrics){
+        metricLty=metricsToCompute$baseRLty[metricsToCompute$metric==metric]
+        lines(qData$date,qData[,metric],col="black", lty=metricLty,lwd=2)
+      }
       
-      #Adding selected ESP years
-      # if( length(selectedYrs) != 0){
-      #   
-      #   if(length(selectedYrs) > 9)
-      #     cat("\n\tCan only plot up to 9 ESP years at once and preserve color scheme.\n\tPlease reduce number of selected years.")
-      #   
-      #   
-      #   for( selectedYr in selectedYrs){
-      #     lineData <- plotData[plotData$year == selectedYr, c("date","value")]
-      #     
-      #     p[[k]] <- p[[k]] %>% 
-      #       add_trace(data = lineData,x=~date, y=~value,
-      #                 line=list(color=getColor(selectedYr,selectedYrs)),
-      #                 type = "scatter",mode="lines",name=selectedYr,
-      #                 legendgroup=selectedYr, showlegend=!init,inherit = F)
-      #   }
-      # }
+      #Adding selecte years
+      for(yr in selectedYrs){
+        with(plotData[plotData$year==yr,],
+             lines(date,value,col=getColor(yr,selectedYrs),lwd=2))
+      }
       
-      # init <- T
     } #end for loop, subplot
     
+    # dev.off()
     
   }  #End loop of pdf pages
   
   #save pdf
   dev.off()
   
-  return(subplot(p,nrows = length(p), shareX = T, titleY = T, widths = 1))
+  cat(sprintf("\nDone creating pdf\nSaved pdf plot here:\n\t%s/%s", getwd(),pdfFile))
+  
 }
+
 
 

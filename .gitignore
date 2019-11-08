@@ -15,3 +15,7 @@ old_esp_data/
 #Instructions Manual Support Materials
 #=====================================
 instructions/figs_tbls/*
+
+#Plots
+#=====
+plots/

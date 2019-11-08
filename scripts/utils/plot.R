@@ -1,9 +1,61 @@
 
+plotlyLtyToGraphicsLty <- function(plotlyLtys){
+  #Given the string that defines the formatting for plotly line types,
+  #  returns the number used in base R graphics library for the
+  #  same line types
+  #conversion dataframe:
+  ltyConv <- data.frame(plotly=c("solid", "dot", "dash", "longdash", "dashdot","longdashdot"),
+                        baseR = c(1,3,2,5,4,6),stringsAsFactors = F)
+  ltyConv$baseR[match(plotlyLtys,ltyConv$plotly)]
+}
+
 # forming colors for given set of inputs
 getColor <- function(yr,allYrs){
   #Getting the full pallette
   pal <- RColorBrewer::brewer.pal(length(allYrs),"Set1")
   pal[which(allYrs==yr)]
+}
+
+
+makeHeaderPlot <- function(selectedMetrics, selectedYrs,selectedFcstInfo,addLineLeg=F){
+  prevPar <- par("mar")
+  par(mar=c(2,4,4,4))
+  mainString <- sprintf("%s Watershed, CWMS ESP Analysis",selectedFcstInfo$watershed)
+  plot(NA,xlim=c(0,1),ylim=c(0,1),axes=F,xlab="",ylab="",main=mainString,type="n")
+  
+  #Header definining forecast data
+  hdrStrings <- vector("expression")
+  
+  # hdrStrings[[1]] <- substitute(expression(bold(myvalue)),
+  #                               list(myvalue =mainString))[[2]]
+  # hdrStrings <- expression(bold(eval(sprintf("%s, ESP Analysis",selectedFcstInfo$watershed))))
+  # hdrStrings <- c(hdrStrings, sprintf("Forecast Name:             %s",selectedFcstInfo$watershed))
+  hdrStrings <- c(hdrStrings, sprintf("Forecast Name:         %s", selectedFcstInfo$description))
+  hdrStrings <- c(hdrStrings, sprintf("Start Time:                      %s",selectedFcstInfo$startTime))
+  hdrStrings <- c(hdrStrings, sprintf("Forecast Start Time:         %s",selectedFcstInfo$fcstTime))
+  hdrStrings <- c(hdrStrings, sprintf("End Time:                        %s",selectedFcstInfo$endTime))
+  hdrStrings <- c(hdrStrings, sprintf("Plot Created By:             %s", Sys.getenv("USERNAME")))
+  # for(l in 1:length(hdrStrings)) text(y = 1-l/length(hdrStrings),x = 0,labels = hdrStrings[l],adj = 0)
+  legend("topleft",legend=hdrStrings,bty = "n")
+  
+  #Line descriptions
+  if(addLineLeg){
+    lineStrings <- c("All ESP",
+                     selectedYrs,
+                     selectedMetrics)
+    lineTypes <- c(1,
+                   rep(1,length(selectedYrs)),
+                   metricsToCompute$baseRLty[match(selectedMetrics,metricsToCompute$metric)])
+    lineCols <- c(espLinCol,
+                  sapply(selectedYrs,getColor,allYrs = selectedYrs),
+                  rep("black",length(selectedYrs)))
+    lineWidths <- c(1,rep(2,length(selectedYrs)+length(selectedMetrics)))
+    legend("topright",legend=lineStrings,col=lineCols, lty=lineTypes,bty = "n",lwd=lineWidths)
+    
+  }
+  #reseting par
+  par(mar=prevPar)
+  return(NULL)
 }
 
 

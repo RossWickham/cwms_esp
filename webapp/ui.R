@@ -47,13 +47,15 @@ shinyUI(fluidPage(
     #drop down to select an ESP year
     selectInput('selectedYrs', 'ESP Years', availableYrs, multiple=TRUE, selectize=TRUE),
     
-    #update button
+    #update plot button and save to PDF button
     actionButton("updateButton","Update"),
-    
-    #update button
-    actionButton("savePDFButton","Save to pdf (not working yet)"),
+    actionButton("savePDFButton","Save to pdf"),
     
     #Current forecast information
+    titlePanel("Forecast Information"),
+    htmlOutput("fcst_info"),
+    
+    #Current CWMS database information
     titlePanel("Current CWMS Data"),
     htmlOutput("current_data_tbl"),
     
