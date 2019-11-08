@@ -221,6 +221,7 @@ getHistoricalCWMS <- function(cwmsPath, startESPYr){
     #No data, so get all from CWMS database
     out <- cwms_to_df(path = cwmsPath,
                       start_date = startDate,end_date = Sys.Date())
+    if(!dir.exists("historical_data")) dir.create("historical_data")
     writeSqlTbl(historicalDBFile, cwmsPath, out) #saving out latest and greatest
   }
   return(out)

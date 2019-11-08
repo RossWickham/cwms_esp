@@ -3,6 +3,8 @@ cat("\nrunning global")
 options(warn=-1) #no warnings, they clutters command prompt window.  output uses 'cat'
 
 
+#Testing - only using libraries from V drive to ensure portable
+if(Sys.getenv("USERNAME") == "g4ecjrsw") .libPaths("V:\\CWMS\\software\\R-3.4.2\\library")
 
 #The available quantiles for the dropdown menu, and their associated line types for plotly
 metricsToCompute <- data.frame(metric=    c("min", "1%",        "10%", "25%",    "median",

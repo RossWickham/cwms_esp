@@ -18,11 +18,10 @@ Note: you may need to open-close the CAVI if it's open since the jars are loaded
 from __future__     import with_statement
 from hec.heclib.dss import *
 from com.rma.client import Browser
-import sys, time
 from com.ziclix.python.sql import zxJDBC
 from hec.heclib.dss import HecDss
 from hec.hecmath import HecMath
-import re
+import sys, time, re, os
 #
 #
 #### Config #################################
@@ -32,8 +31,14 @@ import re
 #  '.*' defines any character from 0-n times
 # python reg expr cheat sheet is here: https://www.debuggex.com/cheatsheet/regex/python
 #Note: exporting lots of data to sqlite will slow down compute times
-regExprToSave = ["/.*/.*/FLOW.*/.*/.*/.*/",
-				 "/.*/.*-POOL/.*/.*/.*/.*/"]
+#regExprToSave = ["/.*/.*/FLOW.*/.*/.*/.*/",
+#				 "/.*/.*-POOL/.*/.*/.*/.*/"]
+regExprToSave=["//DWORSHAK-POOL/ELEV/.*/6HOUR/.*----E0/",
+	"//DWORSHAK_OUT/FLOW/.*/6HOUR/.*----E0/",
+	"//DWORSHAK_IN/FLOW/.*/6HOUR/.*----E0/",
+	"//LOWER GRANITE-POOL/ELEV/.*/6HOUR/.*----E0/",
+	"//LOWER GRANITE_OUT/FLOW/.*/6HOUR/.*----E0/",
+	"//BROWNLEE_IN/FLOW/.*/6HOUR/.*----E0/"]
 #
 #Output sqlite file to be saved in same directory as forecast.dss
 dbFileName    = "forecast.db"

@@ -6,10 +6,13 @@ suppressPackageStartupMessages(require(shiny,quietly = T))
 args = commandArgs(trailingOnly=TRUE)
 defaultHost <- args[1] #as string
 defaultPort <- as.integer(args[2]) #needs to be integer
+baseJavaDir <- args[3]
 
 #Location of shiny app
 dirName = sprintf("%s/webapp", getwd())
 
 #running app
-runApp(appDir = dirName, launch.browser=F, port = defaultPort, host = defaultHost, quiet = T)
+runApp(appDir = dirName, launch.browser=F,
+       port = defaultPort, host = defaultHost,
+       quiet = T)
 

@@ -36,7 +36,7 @@ echo.
 
 
 rem passing arguments to R script for host and port
-%rExecutablePath% "%rScript%" %defaultHost% %defaultPort%
+%rExecutablePath% "%rScript%" %defaultHost% %defaultPort% %baseJavaDir%
 
 
 pause

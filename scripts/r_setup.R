@@ -18,7 +18,7 @@ if(R.Version()$arch=="x86_64"){
   # use 64-bit .jar and .dll
   #Linking to 64-bit java on 'V' drive
   #baseJavaDir = "\\\\nww-netapp1\\prjmgnt\\CWMS\\software\\java64"
-  baseJavaDir = "D:\\Programs\\CWMS-v3.1.1.126\\HEC-ResSim\\3.4"
+  # baseJavaDir = "D:\\Programs\\CWMS-v3.1.1.126\\HEC-ResSim\\3.4"
   
   options(dss_location=baseJavaDir )
   options(dss_jre_location= paste0(baseJavaDir ,"\\java") )
