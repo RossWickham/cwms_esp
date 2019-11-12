@@ -31,6 +31,8 @@ suppressPackageStartupMessages({
 #Retrieving the base R equivalent line types from plotly (functino defined in plot.R)
 metricsToCompute$baseRLty <- plotlyLtyToGraphicsLty(metricsToCompute$lty_plotly)
 
+### Loading Config and ESP ###########################
+
 #Loading configuration data from Excel
 config <- loadConfig()
 cDataTbl <- loadCurrentDataTbl()
@@ -60,6 +62,7 @@ fcstInfo <- loadFcstInfo()
 #Scripts to check that necessary data are available and config is defined correctly
 source("scripts/startup_checks.R")
 
+### Computing Historical and ESP Inflow Volumes ############################
 
 #Initializing forecast tables as NULL
 histFcstFull <- histFcstPartial <- espFcstPartial <- NULL
@@ -123,4 +126,14 @@ minLty = 3
 espLinCol = grey(0.5,0.3) 
 
 cat("\n\nBrowser is ready - refresh or open new browser session")
+
+### Plotly Settings ######################
+
+
+#margins.  See layout>margins in plotly references:
+#  https://plot.ly/r/reference/#layout-margin
+#  https://plot.ly/r/setting-graph-size/
+#Setting margin in pixels
+pMargins <- list(l=100)
+
 
